@@ -5,28 +5,28 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.redhat.coolstore</groupId>
-  <artifactId>lab-03-inventory-service</artifactId>
-  <version>1.0.0</version>
+  <artifactId>inventory-service</artifactId>
+  <version>1.0.1</version>
   <packaging>war</packaging>
   
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
 
-    <version.wildfly.swarm>7.0.0.redhat-8</version.wildfly.swarm>
-    <version.wildfly.swarm.community>2017.10.1</version.wildfly.swarm.community>
+    <version.thorntail>2.2.0.Final-redhat-00021</version.thorntail>
+    <version.thorntail.community>2.2.1.Final</version.thorntail.community>
 
     <version.postgresql>9.4.1207</version.postgresql>
-    <version.fabric8-maven-plugin>3.5.28</version.fabric8-maven-plugin>
+    <version.fabric8-maven-plugin>3.5.40</version.fabric8-maven-plugin>
   </properties>
   
   <dependencyManagement>
     <dependencies>
 
       <dependency>
-        <groupId>org.wildfly.swarm</groupId>
+        <groupId>io.thorntail</groupId>
         <artifactId>bom</artifactId>
-        <version>${version.wildfly.swarm}</version>
+        <version>${version.thorntail}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -48,52 +48,64 @@
   <dependencies>
 
     <dependency>
-      <groupId>org.wildfly.swarm</groupId>
+      <groupId>io.thorntail</groupId>
       <artifactId>jpa</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.wildfly.swarm</groupId>
+      <groupId>io.thorntail</groupId>
       <artifactId>cdi</artifactId>
     </dependency>
     
     <dependency>
-      <groupId>org.wildfly.swarm</groupId>
-      <artifactId>arquillian</artifactId>
-      <version>${version.wildfly.swarm.community}</version>
-      <scope>test</scope>
-    </dependency>    
-      
-    <dependency>
-      <groupId>org.wildfly.swarm</groupId>
+      <groupId>io.thorntail</groupId>
       <artifactId>undertow</artifactId>
     </dependency>
       
     <dependency>
-      <groupId>org.wildfly.swarm</groupId>
+      <groupId>io.thorntail</groupId>
       <artifactId>jaxrs-jsonp</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.thorntail</groupId>
+      <artifactId>swagger</artifactId>
+      <version>${version.thorntail.community}</version>
     </dependency>
     
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
       <artifactId>resteasy-client</artifactId>
+
+      <!-- http://repository.jboss.org/nexus/content/groups/public-jboss/org/jboss/resteasy/resteasy-client/3.6.2.Final/ -->
+      <version>3.6.2.Final</version>
+      <scope>test</scope>
+    </dependency>    
+    <dependency>
+      <groupId>io.thorntail</groupId>
+      <artifactId>arquillian</artifactId>
+      <version>${version.thorntail.community}</version>
       <scope>test</scope>
     </dependency>    
       
-   	<!-- ADD DEPENDENCIES HERE -->
-  	
-   	
-   	
-   	       
+      
+    <!-- ADD DEPENDENCIES HERE -->
+	<dependency>
+	    <groupId>io.thorntail</groupId>
+	    <artifactId>microprofile-health</artifactId>
+	</dependency>      
+       
+       
+              
   </dependencies>
   
   <build>
     <plugins>
 
       <plugin>
-        <groupId>org.wildfly.swarm</groupId>
-        <artifactId>wildfly-swarm-plugin</artifactId>
-        <version>${version.wildfly.swarm}</version>
+        <groupId>io.thorntail</groupId>
+        <artifactId>thorntail-maven-plugin</artifactId>
+        <version>${version.thorntail}</version>
         <executions>
           <execution>
             <goals>
@@ -131,12 +143,14 @@
         <dependency>
           <groupId>com.h2database</groupId>
           <artifactId>h2</artifactId>
+          <!-- http://repository.jboss.org/nexus/content/groups/public-jboss/com/h2database/h2/1.4.197/ -->
+          <version>1.4.197</version>
         </dependency>
       </dependencies>
     </profile>
 
-	<!-- OPENSHIFT PROFILE -->
-	
+    <!-- OPENSHIFT PROFILE -->
+    
     <profile>
       <id>openshift</id>
  
@@ -157,13 +171,12 @@
             <configuration>
               <generator>
                 <includes>
-                  <include>wildfly-swarm</include>
+                  <include>thorntail-v2</include>
                 </includes>
                 <config>
-                  <wildfly-swarm>
-                    <fromMode>isTag</fromMode>
-                    <from>redhat-openjdk18-openshift:1.1</from>
-                  </wildfly-swarm>
+                  <thorntail>
+                    <from>registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift</from>
+                  </thorntail>
                 </config>
                 <excludes>
                   <exclude>webapp</exclude>
@@ -186,18 +199,29 @@
     
   </profiles>
   
-	<repositories>
-		<repository>
-			<id>redhat</id>
-			<url>https://maven.repository.redhat.com/ga/</url>
-		</repository>
-	</repositories>
+    <repositories>
+        <repository>
+            <id>redhat</id>
+            <url>https://maven.repository.redhat.com/ga/</url>
+        </repository>
+        <repository>
+            <id>jboss-public-repository-group</id>
+            <name>JBoss Public Repository Group</name>
+            <url>http://repository.jboss.org/nexus/content/groups/public-jboss/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
-	<pluginRepositories>
-		<pluginRepository>
-			<id>redhat</id>
-			<url>https://maven.repository.redhat.com/ga/</url>
-		</pluginRepository>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>redhat</id>
+            <url>https://maven.repository.redhat.com/ga/</url>
+        </pluginRepository>
 </pluginRepositories>
   
 </project>
