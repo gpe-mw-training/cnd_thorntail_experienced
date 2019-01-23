@@ -1,1 +1,1 @@
-WildFly Swarm Lab 
+Thorntail Lab 

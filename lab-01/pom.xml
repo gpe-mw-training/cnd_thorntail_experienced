@@ -13,8 +13,8 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
 
-    <version.wildfly.swarm>7.0.0.redhat-8</version.wildfly.swarm>
-    <version.wildfly.swarm.community>2017.10.1</version.wildfly.swarm.community>
+    <version.thorntail>2.2.0.Final-redhat-00021</version.thorntail>
+    <version.thorntail.community>2.2.0.Final</version.thorntail.community>
 
     <version.postgresql>9.4.1207</version.postgresql>
     <version.fabric8-maven-plugin>3.5.28</version.fabric8-maven-plugin>
@@ -24,9 +24,9 @@
     <dependencies>
 
       <dependency>
-        <groupId>org.wildfly.swarm</groupId>
+        <groupId>io.thorntail</groupId>
         <artifactId>bom</artifactId>
-        <version>${version.wildfly.swarm}</version>
+        <version>${version.thorntail}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -57,9 +57,9 @@
     <plugins>
 
       <plugin>
-        <groupId>org.wildfly.swarm</groupId>
-        <artifactId>wildfly-swarm-plugin</artifactId>
-        <version>${version.wildfly.swarm}</version>
+        <groupId>io.thorntail</groupId>
+        <artifactId>thorntail-maven-plugin</artifactId>
+        <version>${version.thorntail}</version>
         <executions>
           <execution>
             <goals>
