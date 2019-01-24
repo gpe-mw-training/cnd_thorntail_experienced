@@ -36,7 +36,7 @@ spec:
               mountPath: /app/config
           env:
             - name: JAVA_OPTIONS
-              value: "-Dswarm.project.stage.file=file:///app/config/project-defaults.yaml"
+              value: "-Dswarm.project.stage.file=file:///app/config/project-defaults.yml"              
       volumes:
         - configMap:
             name: app-config
