@@ -1,0 +1,9 @@
+metadata:
+  name: inventory-service
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  to:
+    kind: Service
+    name: inventory-service     
