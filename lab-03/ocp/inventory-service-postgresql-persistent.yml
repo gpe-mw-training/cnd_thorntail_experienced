@@ -1,0 +1,163 @@
+apiVersion: v1
+kind: Template
+labels:
+  application: inventory-postgresql
+metadata:
+  name: inventory-postgresql
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+  spec:
+    ports:
+    - port: 5432
+      targetPort: 5432
+    selector:
+      deploymentconfig: ${APPLICATION_NAME}
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: ${APPLICATION_NAME}
+    labels:
+      application: ${APPLICATION_NAME}
+  spec:
+    replicas: 1
+    selector:
+      deploymentconfig: ${APPLICATION_NAME}
+    strategy:
+      recreateParams:
+        post:
+          execNewPod:
+            command:
+              - /bin/sh
+              - -i
+              - -c
+              - sleep 10 && PGPASSWORD=$POSTGRESQL_PASSWORD psql -h $INVENTORY_POSTGRESQL_SERVICE_HOST -U $POSTGRESQL_USER -q -d $POSTGRESQL_DATABASE -c "$POSTGRESQL_INIT"
+            containerName: ${APPLICATION_NAME}
+            env:
+            - name: POSTGRESQL_INIT
+              value: CREATE TABLE product_inventory (itemid character varying(255) 
+                NOT NULL,link character varying(255),location character varying(255),
+                quantity integer NOT NULL);
+                ALTER TABLE product_inventory OWNER TO jboss;ALTER TABLE ONLY product_inventory 
+                ADD CONSTRAINT product_inventory_pkey PRIMARY KEY (itemid);
+                INSERT into product_inventory (itemid, link, location, quantity) 
+                values ('329299', 'http://maps.google.com/?q=Raleigh', 'Raleigh', 736);
+                INSERT into product_inventory (itemid, link, location, quantity) 
+                values ('329199', 'http://maps.google.com/?q=Raleigh', 'Raleigh', 512);
+                INSERT into product_inventory (itemid, link, location, quantity) 
+                values ('165613', 'http://maps.google.com/?q=Raleigh', 'Raleigh', 256);
+                INSERT into product_inventory (itemid, link, location, quantity) 
+                values ('165614', 'http://maps.google.com/?q=Raleigh', 'Raleigh', 29);
+                INSERT into product_inventory (itemid, link, location, quantity) 
+                values ('165954', 'http://maps.google.com/?q=Raleigh', 'Raleigh', 87);
+                INSERT into product_inventory (itemid, link, location, quantity) 
+                values ('444434', 'http://maps.google.com/?q=Raleigh', 'Raleigh', 443);
+                INSERT into product_inventory (itemid, link, location, quantity) 
+                values ('444435', 'http://maps.google.com/?q=Raleigh', 'Raleigh', 600);
+                INSERT into product_inventory (itemid, link, location, quantity) 
+                values ('444436', 'http://maps.google.com/?q=Tokyo', 'Tokyo', 230);
+          failurePolicy: ignore
+        timeoutSeconds: 600
+      resources: {}
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          application: ${APPLICATION_NAME}
+          deploymentconfig: ${APPLICATION_NAME}
+      spec:
+        containers:
+        - env:
+          - name: POSTGRESQL_USER
+            value: ${INVENTORY_DB_USERNAME}
+          - name: POSTGRESQL_PASSWORD
+            value: ${INVENTORY_DB_PASSWORD}
+          - name: POSTGRESQL_DATABASE
+            value: ${INVENTORY_DB_NAME}
+          image: postgresql
+          imagePullPolicy: IfNotPresent
+          name: ${APPLICATION_NAME}
+          ports:
+          - containerPort: 5432
+            protocol: TCP
+          volumeMounts:
+          - mountPath: /var/lib/pgsql/data
+            name: inventory-postgresql-data
+          livenessProbe:
+            initialDelaySeconds: 30
+            failureThreshold: 10
+            periodSeconds: 10
+            tcpSocket:
+              port: 5432
+            timeoutSeconds: 1
+          readinessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -i
+              - -c
+              - psql -h 127.0.0.1 -U $POSTGRESQL_USER -q -d $POSTGRESQL_DATABASE -c 'SELECT 1'
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 10
+            periodSeconds: 10
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 50m
+              memory: 256Mi
+        terminationGracePeriodSeconds: 60
+        volumes:
+        - name: inventory-postgresql-data
+          persistentVolumeClaim:
+            claimName: inventory-postgresql-pv
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${APPLICATION_NAME}
+        from:
+          kind: ImageStreamTag
+          name: postgresql:latest
+          namespace: openshift
+      type: ImageChange
+    - type: ConfigChange
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: inventory-postgresql-pv
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 1Gi
+parameters:
+- description: Application name
+  name: APPLICATION_NAME
+  required: true
+  value: inventory-postgresql
+- description: Inventory Service database user name
+  from: user[a-zA-Z0-9]{3}
+  generate: expression
+  name: INVENTORY_DB_USERNAME
+  required: true
+- description: Inventory Service database user password
+  from: '[a-zA-Z0-9]{8}'
+  generate: expression
+  name: INVENTORY_DB_PASSWORD
+  required: true
+- description: Inventory Service database name
+  name: INVENTORY_DB_NAME
+  required: true
+  value: inventorydb

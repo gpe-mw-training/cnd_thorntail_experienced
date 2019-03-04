@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+  xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.redhat.coolstore</groupId>
+  <artifactId>inventory-service</artifactId>
+  <version>1.0.1</version>
+  <packaging>war</packaging>
+  
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+
+    <version.thorntail>2.2.0.Final-redhat-00021</version.thorntail>
+    <version.thorntail.community>2.2.1.Final</version.thorntail.community>
+
+    <version.postgresql>9.4.1207</version.postgresql>
+    <version.fabric8-maven-plugin>3.5.40</version.fabric8-maven-plugin>
+  </properties>
+  
+  <dependencyManagement>
+    <dependencies>
+
+      <dependency>
+        <groupId>io.thorntail</groupId>
+        <artifactId>bom</artifactId>
+        <version>${version.thorntail}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- 
+        Override version 4.5.0.redhat-1 
+        (managed by org.jboss.bom:eap-runtime-artifacts:7.0.8.GA:pom)
+        which breaks Arquillian tests 
+      -->
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpclient</artifactId>
+        <version>4.5.2</version>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
+  
+  <dependencies>
+
+    <dependency>
+      <groupId>io.thorntail</groupId>
+      <artifactId>jpa</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.thorntail</groupId>
+      <artifactId>cdi</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>io.thorntail</groupId>
+      <artifactId>undertow</artifactId>
+    </dependency>
+      
+    <dependency>
+      <groupId>io.thorntail</groupId>
+      <artifactId>jaxrs-jsonp</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.thorntail</groupId>
+      <artifactId>swagger</artifactId>
+      <version>${version.thorntail.community}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-client</artifactId>
+
+      <!-- http://repository.jboss.org/nexus/content/groups/public-jboss/org/jboss/resteasy/resteasy-client/3.6.2.Final/ -->
+      <version>3.6.2.Final</version>
+      <scope>test</scope>
+    </dependency>    
+    <dependency>
+      <groupId>io.thorntail</groupId>
+      <artifactId>arquillian</artifactId>
+      <version>${version.thorntail.community}</version>
+      <scope>test</scope>
+    </dependency>    
+      
+      
+       <!-- ADD DEPENDENCIES HERE -->
+      
+       
+       
+              
+  </dependencies>
+  
+  <build>
+    <plugins>
+
+      <plugin>
+        <groupId>io.thorntail</groupId>
+        <artifactId>thorntail-maven-plugin</artifactId>
+        <version>${version.thorntail}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>package</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <arguments>
+            <argument>-S</argument>
+            <argument>local</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+          <failOnMissingWebXml>false</failOnMissingWebXml>
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+
+  <profiles>
+    
+    <profile>
+      <id>local</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>com.h2database</groupId>
+          <artifactId>h2</artifactId>
+          <!-- http://repository.jboss.org/nexus/content/groups/public-jboss/com/h2database/h2/1.4.197/ -->
+          <version>1.4.197</version>
+        </dependency>
+      </dependencies>
+    </profile>
+
+    <!-- OPENSHIFT PROFILE -->
+    
+    <profile>
+      <id>openshift</id>
+ 
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>io.fabric8</groupId>
+            <artifactId>fabric8-maven-plugin</artifactId>
+            <version>${version.fabric8-maven-plugin}</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>resource</goal>
+                  <goal>build</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <generator>
+                <includes>
+                  <include>thorntail-v2</include>
+                </includes>
+                <config>
+                  <thorntail>
+                    <from>registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift</from>
+                  </thorntail>
+                </config>
+                <excludes>
+                  <exclude>webapp</exclude>
+                </excludes>
+              </generator>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+
+      <dependencies>
+        <dependency>
+          <groupId>org.postgresql</groupId>
+          <artifactId>postgresql</artifactId>
+          <version>${version.postgresql}</version>
+        </dependency>
+      </dependencies>
+
+    </profile>
+    
+  </profiles>
+  
+    <repositories>
+        <repository>
+            <id>redhat</id>
+            <url>https://maven.repository.redhat.com/ga/</url>
+        </repository>
+        <repository>
+            <id>jboss-public-repository-group</id>
+            <name>JBoss Public Repository Group</name>
+            <url>http://repository.jboss.org/nexus/content/groups/public-jboss/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>redhat</id>
+            <url>https://maven.repository.redhat.com/ga/</url>
+        </pluginRepository>
+</pluginRepositories>
+  
+</project>
